@@ -3,12 +3,8 @@
 词语查询的时间复杂度为 O(n)\\
 
 本双数组实现字符串查找的基本算法是\\
-
-%%( font-size: 150%; color: red; )
 next_sub = base[cur_sub] + next_var_seq\\
 check[cur_sub] = pre_sub\\
-%%
-
 主要是字符之间的状态传递实现\\
 
 使用方法\\
