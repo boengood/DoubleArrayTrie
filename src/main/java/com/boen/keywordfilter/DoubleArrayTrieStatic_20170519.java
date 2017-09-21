@@ -25,20 +25,20 @@ import java.util.Map.Entry;
  * @date 2015年1月12日
  * @update 上午9:51:42
  */
-public class DoubleArrayTrieStatic {
-	
+public class DoubleArrayTrieStatic_20170519 {
+
 	int firstCharNum ;		// 首字数量,去重复
 	int baseInit = 1114;	// 状态值初始值和总字数有关
 	int HOPS_NUM = 30;  	// 碰撞时状态值跳跃数  default:30
 	int pos = 0;
     int base[] = new int[2048];
     int check[] = new int[2048];
-	
+
 	Map<Character, Integer> seqMap = new HashMap<Character, Integer>();
 	Map<Character, List<char[]>> allKeyWords = new HashMap<Character, List<char[]>>();
 	List<KeyWordDO> KeyWordDOList = new ArrayList<KeyWordDO>();
 	List<Character> allChars = new ArrayList<Character>();
-	
+
 	private int getCharSeq(char c ,Boolean isFist){
 		Integer cseq = seqMap.get(c);
 		if ( cseq == null) {
@@ -51,7 +51,7 @@ public class DoubleArrayTrieStatic {
 		}
 		return cseq.intValue();
 	}
-	
+
 	private int getCharSeqNotSet(char c){
 		Integer cseq = seqMap.get(c);
 		if (cseq == null) {
@@ -60,25 +60,25 @@ public class DoubleArrayTrieStatic {
 			return cseq.intValue();
 		}
 	}
-	
+
 	private void extendArray(){// 扩容
 		base = Arrays.copyOf(base, base.length*2) ;
 		check = Arrays.copyOf(check, check.length*2) ;
 	}
-	
+
 	private void initCharSeq(String keyWord){
 		char[]  keyChars = keyWord.toCharArray();
 		for (int i = 0; i < keyChars.length; i++) {
 			getCharSeq(keyChars[i], i == 0 ? true : false);
 		}
 		char firstWord = keyChars[0] ;
-		
+
 		KeyWordDO keyWordDO = new KeyWordDO();
 		keyWordDO.setFirstWord(firstWord);
 		keyWordDO.setKeyWord(keyWord);
 		KeyWordDOList.add(keyWordDO);
 	}
-	
+
 	/**
 	 * 生成树
 	 */
@@ -163,7 +163,7 @@ public class DoubleArrayTrieStatic {
 											}else {
 												tmpMap.put(tmpSub, i);
 											}
-											
+
 										}
 									}else if (tempChar[l] == keychars[l] && isMatch) {/*在当前位置之前完全匹配说明之前已经匹配过 无需再处理*/}
 								}
@@ -178,7 +178,7 @@ public class DoubleArrayTrieStatic {
 							if (isMeet) {
 								// 此时表示所有该节点的子节点都可找到对应位置
 								if (j == keychars.length -1) {
-									base[cur_Sub] = -baseValue;									
+									base[cur_Sub] = -baseValue;
 								}else {
 									base[cur_Sub] = baseValue;
 								}
@@ -188,7 +188,7 @@ public class DoubleArrayTrieStatic {
 								isThisEnd = true;
 							}
 						}
-						
+
 					}else {
 						// 之前已经将其纳入， 默认信任之前数据
 						if (check[cur_Sub] != pre_Sub) {
@@ -209,7 +209,7 @@ public class DoubleArrayTrieStatic {
 		System.out.println(check.length);
 		return _error;
 	}
-	
+
 	public boolean isKeyWord(String keyWord){
 		char[] keyChars = keyWord.toCharArray();
 		int preSub = 0;
@@ -230,17 +230,17 @@ public class DoubleArrayTrieStatic {
 		}
 		return false;
 	}
-	
+
 	public List<String> getAllKeyWord(String content){
 		char[] keyChars = content.toCharArray();
 		List <String> keywords = new ArrayList<String>();
 		int _pos = 0;
 		int rollback = 0;
-		
+
 		int preSub = 0;
 		int preValue = 0;
 		int curSub = 0;
-		
+
 		StringBuilder builder = new StringBuilder();
 		while (_pos < keyChars.length) {
 			char c = keyChars[_pos];
@@ -303,10 +303,10 @@ public class DoubleArrayTrieStatic {
 					}
 				}
 			}
-			
+
 			_pos++;
 		}
-		
+
 		return keywords;
 	}
 
@@ -498,10 +498,10 @@ public class DoubleArrayTrieStatic {
 			}
 		}
 	}
-	
+
 	public void loadKeyWord() throws IOException{
 		List<String> keyWordList = new ArrayList<String>();/*URL dic = ArrayTrie.class.getResource("keyword.txt");*/
-		BufferedReader in = new BufferedReader(new InputStreamReader(DoubleArrayTrieStatic.class.getResourceAsStream("/keyword.txt"),"UTF-8"));
+		BufferedReader in = new BufferedReader(new InputStreamReader(DoubleArrayTrieStatic_20170519.class.getResourceAsStream("/keyword.txt"),"UTF-8"));
 		//BufferedReader in2 = new BufferedReader(new InputStreamReader(DoubleArrayTrieStatic.class.getResourceAsStream("/keyword2.txt"),"UTF-8"));
        // BufferedReader in3 = new BufferedReader(new InputStreamReader(DoubleArrayTrieStatic.class.getResourceAsStream("/keyword3.txt"),"UTF-8"));
 
@@ -514,7 +514,7 @@ public class DoubleArrayTrieStatic {
 			addKeyWord(keyWord);
 		}
 		line = null;
-		
+
 		/*while ((line = in2.readLine()) != null) {
 			String[] lineCols = line.split(";");
 			for (String keyWord : lineCols) {
@@ -534,14 +534,14 @@ public class DoubleArrayTrieStatic {
             keyWordList.add(keyWord);
             addKeyWord(keyWord);
         }*/
-		
+
 		in.close();
 		//in2.close();
         //in3.close();
 		for (String keyWord : keyWordList) {
 			initCharSeq(keyWord.trim());
 		}
-		
+
 		//System.out.println("首字数量" + firstCharNum);
 		//System.out.println("总字数" + seqMap.size());
 		if (seqMap.size() > baseInit) {
@@ -553,7 +553,7 @@ public class DoubleArrayTrieStatic {
         System.out.println("构建树结束,共消耗" + (System.currentTimeMillis() - startTried) +"毫秒");
 		KeyWordDOList = null;
 	}
-	
+
 	class KeyWordDO{
 		char firstWord;
 		String keyWord;
@@ -570,7 +570,7 @@ public class DoubleArrayTrieStatic {
 			this.keyWord = keyWord;
 		}
 	}
-	protected DoubleArrayTrieStatic() {}
+	protected DoubleArrayTrieStatic_20170519() {}
 
 
 }

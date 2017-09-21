@@ -1,7 +1,5 @@
 package com.boen.keywordfilter;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.util.*;
 import java.util.Map.Entry;
 
@@ -25,33 +23,34 @@ import java.util.Map.Entry;
  * @date 2015年1月12日
  * @update 上午9:51:42
  */
-public class DoubleArrayTrieStatic {
-	
+public class DATrieStatic implements Serializable{
+	private static final long serialVersionUID = -4377820862232402359L;
+
 	int firstCharNum ;		// 首字数量,去重复
 	int baseInit = 1114;	// 状态值初始值和总字数有关
 	int HOPS_NUM = 30;  	// 碰撞时状态值跳跃数  default:30
 	int pos = 0;
     int base[] = new int[2048];
     int check[] = new int[2048];
-	
+
 	Map<Character, Integer> seqMap = new HashMap<Character, Integer>();
 	Map<Character, List<char[]>> allKeyWords = new HashMap<Character, List<char[]>>();
 	List<KeyWordDO> KeyWordDOList = new ArrayList<KeyWordDO>();
 	List<Character> allChars = new ArrayList<Character>();
-	
+
 	private int getCharSeq(char c ,Boolean isFist){
 		Integer cseq = seqMap.get(c);
-		if ( cseq == null) {
+		if ( cseq == null){
 			if (isFist) {
 				firstCharNum ++;
 			}
-			cseq = seqMap.size() + 1;
+			cseq = new Integer(seqMap.size() + 1);
 			seqMap.put(c, cseq);
 			allChars.add(c);
 		}
 		return cseq.intValue();
 	}
-	
+
 	private int getCharSeqNotSet(char c){
 		Integer cseq = seqMap.get(c);
 		if (cseq == null) {
@@ -60,32 +59,32 @@ public class DoubleArrayTrieStatic {
 			return cseq.intValue();
 		}
 	}
-	
+
 	private void extendArray(){// 扩容
 		base = Arrays.copyOf(base, base.length*2) ;
 		check = Arrays.copyOf(check, check.length*2) ;
 	}
-	
+
 	private void initCharSeq(String keyWord){
-		char[]  keyChars = keyWord.toCharArray();
+		char  keyChars[] = keyWord.toCharArray();
 		for (int i = 0; i < keyChars.length; i++) {
 			getCharSeq(keyChars[i], i == 0 ? true : false);
 		}
 		char firstWord = keyChars[0] ;
-		
+
 		KeyWordDO keyWordDO = new KeyWordDO();
 		keyWordDO.setFirstWord(firstWord);
 		keyWordDO.setKeyWord(keyWord);
 		KeyWordDOList.add(keyWordDO);
 	}
-	
+
 	/**
 	 * 生成树
 	 */
 	private int tried() {
 		int _error = 0;//错误码
 		for (Entry<Character, List<char[]>> entry:allKeyWords.entrySet()) {
-			List<char[]> keywordCharList =   entry.getValue();
+			List<char[]> keywordCharList = entry.getValue();
             // 数据排序，防止碰撞，减少循环
             Collections.sort(keywordCharList, new Comparator(){
                 @Override
@@ -101,7 +100,7 @@ public class DoubleArrayTrieStatic {
                                 return  -1;
                             }
                     }
-                    return 0;
+                    return 1;
                 }
             });
            /* if (entry.getKey() == '.'){//遍历当前值，用于调试
@@ -122,7 +121,7 @@ public class DoubleArrayTrieStatic {
 				for (int j = 0; j < keychars.length; j++) {
 					int curCharSeq = getCharSeq(keychars[j], false);
 					cur_Sub = pre_ValueState + curCharSeq; // 即 base下标 等于上一个base的value + 当前字符的seq
-					if (cur_Sub > base.length -1) {
+					while (cur_Sub > base.length -1) {
                         extendArray();
                     }
 					boolean isThisEnd = false;
@@ -141,7 +140,7 @@ public class DoubleArrayTrieStatic {
 								char [] tempChar = keywordCharList.get(k);
 								for (int l = 0; l < tempChar.length && l <= j; l++) {
 									pre_sub_f_1 = pre_state + getCharSeqNotSet(tempChar[l]);
-									if (pre_sub_f_1 > base.length -1) {
+									while (pre_sub_f_1 > base.length -1) {
 										extendArray();
 									}
 									pre_state = Math.abs(base[pre_sub_f_1]);
@@ -154,7 +153,7 @@ public class DoubleArrayTrieStatic {
 										// 前缀全部匹配,需要全部判断
 										if (l < tempChar.length -1) {
 											int tmpSub = baseValue + getCharSeq(tempChar[l + 1], false);
-											if (tmpSub > base.length - 1) {
+											while (tmpSub > base.length - 1) {
 												extendArray();
 											}
 											if (base[tmpSub] != 0 || tmpSub == cur_Sub) {// 防止两词重叠
@@ -163,7 +162,7 @@ public class DoubleArrayTrieStatic {
 											}else {
 												tmpMap.put(tmpSub, i);
 											}
-											
+
 										}
 									}else if (tempChar[l] == keychars[l] && isMatch) {/*在当前位置之前完全匹配说明之前已经匹配过 无需再处理*/}
 								}
@@ -178,7 +177,7 @@ public class DoubleArrayTrieStatic {
 							if (isMeet) {
 								// 此时表示所有该节点的子节点都可找到对应位置
 								if (j == keychars.length -1) {
-									base[cur_Sub] = -baseValue;									
+									base[cur_Sub] = -baseValue;
 								}else {
 									base[cur_Sub] = baseValue;
 								}
@@ -188,7 +187,7 @@ public class DoubleArrayTrieStatic {
 								isThisEnd = true;
 							}
 						}
-						
+
 					}else {
 						// 之前已经将其纳入， 默认信任之前数据
 						if (check[cur_Sub] != pre_Sub) {
@@ -209,7 +208,7 @@ public class DoubleArrayTrieStatic {
 		System.out.println(check.length);
 		return _error;
 	}
-	
+
 	public boolean isKeyWord(String keyWord){
 		char[] keyChars = keyWord.toCharArray();
 		int preSub = 0;
@@ -230,17 +229,17 @@ public class DoubleArrayTrieStatic {
 		}
 		return false;
 	}
-	
+
 	public List<String> getAllKeyWord(String content){
 		char[] keyChars = content.toCharArray();
 		List <String> keywords = new ArrayList<String>();
 		int _pos = 0;
 		int rollback = 0;
-		
+
 		int preSub = 0;
 		int preValue = 0;
 		int curSub = 0;
-		
+
 		StringBuilder builder = new StringBuilder();
 		while (_pos < keyChars.length) {
 			char c = keyChars[_pos];
@@ -303,10 +302,10 @@ public class DoubleArrayTrieStatic {
 					}
 				}
 			}
-			
+
 			_pos++;
 		}
-		
+
 		return keywords;
 	}
 
@@ -398,6 +397,154 @@ public class DoubleArrayTrieStatic {
 
         return replacementContent.toString();
     }
+
+	/**
+	 * 将关键字替换为指定内容
+	 * @param content
+	 * @param start
+	 * @param end
+	 * @return
+	 */
+	public String replaceAllKeyWord(String content,String start,String end){
+		if (content == null || content.equals("")){
+			return  content;
+		}
+		if (start == null){
+			start = "[";
+		}
+		if (end == null){
+			end = "]";
+		}
+		StringBuilder replacementContent  = new StringBuilder();
+		char[] keyChars = content.toCharArray();
+		//List <String> keywords = new ArrayList<String>();
+		int _pos = 0;
+		int rollback = 0;
+		int preSub = 0;
+		int preValue = 0;
+		int curSub = 0;
+		boolean isMatch = false;
+		StringBuilder tmpKeyword = new StringBuilder();
+		StringBuilder tmpAfterKeyword = new StringBuilder();
+		//StringBuilder builder = new StringBuilder();
+		while (_pos < keyChars.length) {
+			char c = keyChars[_pos];
+			int charSeq = getCharSeqNotSet(c);
+			if (charSeq < 0) {// 字在关键词库不存在
+				//builder.setLength(0);
+                _pos = _pos - rollback;
+                rollback = 0;
+                preSub = 0;
+                preValue = 0;
+                curSub = 0;
+
+                if (isMatch){//匹配当中不需要添加
+                    replacementContent.append(start).append(tmpKeyword).append(end);
+                    isMatch = false;
+                }else {
+                    replacementContent.append(keyChars[_pos]);
+                }
+                tmpAfterKeyword.setLength(0);
+                tmpKeyword.setLength(0);
+
+			}else {
+				curSub = preValue + Math.abs(charSeq);
+				if (curSub > base.length -1) {// 不匹配
+					//builder.setLength(0);
+                    _pos = _pos - rollback;
+                    if (isMatch){
+                        replacementContent.append(start).append(tmpKeyword).append(end);
+                        isMatch = false;
+                    }else {
+                        replacementContent.append(keyChars[_pos]);
+                    }
+
+                    tmpKeyword.setLength(0);
+                    tmpAfterKeyword.setLength(0);
+
+					preSub = 0;
+					preValue = 0;
+					curSub = 0;
+					rollback = 0; // new
+				}else {
+					if (base[curSub] > 0 && check[curSub] == preSub) {//当前字符在关键字匹配过程中，需执行后面步骤继续确定是否为关键字
+						if (_pos + 1 ==  keyChars.length){//当前位置为最后一个时
+                            if (isMatch){
+                                replacementContent.append(start).append(tmpKeyword).append(end);
+                                isMatch = false;
+                            }
+							tmpKeyword.setLength(0);
+							tmpAfterKeyword.setLength(0);
+							if (rollback > 0){
+								_pos = _pos - rollback;
+								replacementContent.append(keyChars[_pos]);
+								rollback = 0;
+								preSub = 0;
+								preValue = 0;
+								curSub = 0;
+							}else if (rollback == 0){//当前位置为最后一个时，并且为最后一个字符时
+								replacementContent.append(keyChars[_pos]);
+							}
+						}else{
+							rollback ++;
+							preValue = Math.abs(base[curSub]);
+							preSub = curSub;
+
+							if (isMatch){
+								tmpAfterKeyword.append(keyChars[_pos]);
+							}else {
+								tmpKeyword.append(keyChars[_pos]);
+							}
+						}
+
+					}else if (base[curSub] < 0 && check[curSub] == preSub) {//表明匹配
+						if (isMatch){
+							tmpKeyword.append(tmpAfterKeyword).append(keyChars[_pos]);
+						}else {
+							tmpKeyword.append(keyChars[_pos]);
+						}
+						isMatch = true;
+						if (_pos + 1 ==  keyChars.length){// 最后一个字匹配到的时候
+							replacementContent.append(start).append(tmpKeyword).append(end);
+							isMatch = false;
+							tmpKeyword.setLength(0);
+						}
+						tmpAfterKeyword.setLength(0);
+						/*for (int i = 0; i <= rollback ; i++) {
+							replacementContent.append(replacment);
+						}*/
+						rollback = 1;
+						preValue = Math.abs(base[curSub]);
+						preSub = curSub;
+						/*preSub = 0;
+						preValue = 0;
+						curSub = 0;*/
+					} else {
+                        _pos = _pos - rollback;
+                        if (isMatch){
+                            replacementContent.append(start).append(tmpKeyword).append(end);
+                            isMatch = false;
+                        }else {
+                            replacementContent.append(keyChars[_pos]);
+                        }
+                        tmpKeyword.setLength(0);
+                        tmpAfterKeyword.setLength(0);
+
+						rollback = 0;
+						preSub = 0;
+						preValue = 0;
+						curSub = 0;
+
+
+					}
+				}
+			}
+
+			_pos++;
+		}
+
+		return replacementContent.toString();
+	}
 
     /**
      * 只判断文档是否含有敏感词/关键字
@@ -498,12 +645,10 @@ public class DoubleArrayTrieStatic {
 			}
 		}
 	}
-	
+
 	public void loadKeyWord() throws IOException{
 		List<String> keyWordList = new ArrayList<String>();/*URL dic = ArrayTrie.class.getResource("keyword.txt");*/
-		BufferedReader in = new BufferedReader(new InputStreamReader(DoubleArrayTrieStatic.class.getResourceAsStream("/keyword.txt"),"UTF-8"));
-		//BufferedReader in2 = new BufferedReader(new InputStreamReader(DoubleArrayTrieStatic.class.getResourceAsStream("/keyword2.txt"),"UTF-8"));
-       // BufferedReader in3 = new BufferedReader(new InputStreamReader(DoubleArrayTrieStatic.class.getResourceAsStream("/keyword3.txt"),"UTF-8"));
+		BufferedReader in = new BufferedReader(new InputStreamReader(DATrieStatic.class.getResourceAsStream("/keyword.txt"),"UTF-8"));
 
         String line = null;
 		while ((line = in.readLine()) != null) {
@@ -514,36 +659,14 @@ public class DoubleArrayTrieStatic {
 			addKeyWord(keyWord);
 		}
 		line = null;
-		
-		/*while ((line = in2.readLine()) != null) {
-			String[] lineCols = line.split(";");
-			for (String keyWord : lineCols) {
-                if (keyWord.length() > 1){
-                    keyWord = new String(keyWord.getBytes("UTF-8"));
-                    keyWordList.add(keyWord);
-                    addKeyWord(keyWord);
-                }
 
-			}
-		}
-        line = null;
-        while ((line = in3.readLine()) != null) {
-            String[] lineCols = line.split("=");
-            String keyWord = lineCols[0];
-            keyWord = new String(keyWord.getBytes("UTF-8"));
-            keyWordList.add(keyWord);
-            addKeyWord(keyWord);
-        }*/
-		
 		in.close();
 		//in2.close();
         //in3.close();
 		for (String keyWord : keyWordList) {
 			initCharSeq(keyWord.trim());
 		}
-		
-		//System.out.println("首字数量" + firstCharNum);
-		//System.out.println("总字数" + seqMap.size());
+
 		if (seqMap.size() > baseInit) {
 			baseInit = seqMap.size();
 		}
@@ -553,7 +676,58 @@ public class DoubleArrayTrieStatic {
         System.out.println("构建树结束,共消耗" + (System.currentTimeMillis() - startTried) +"毫秒");
 		KeyWordDOList = null;
 	}
-	
+
+	public void loadKeyWord(String path) throws IOException{
+		List<String> keyWordList = new ArrayList<String>();/*URL dic = ArrayTrie.class.getResource("keyword.txt");*/
+		BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(path),"UTF-8"));
+
+		String line = null;
+		while ((line = in.readLine()) != null) {
+			String keyWord = line;
+			keyWord = new String(keyWord.getBytes("UTF-8"));
+			keyWordList.add(keyWord);
+			addKeyWord(keyWord);
+		}
+
+		in.close();
+
+		for (String keyWord : keyWordList) {
+			initCharSeq(keyWord.trim());
+		}
+
+		if (seqMap.size() > baseInit) {
+			baseInit = seqMap.size();
+		}
+		System.out.println("开始构建敏感词数组树");
+		long startTried = System.currentTimeMillis();
+		tried();// 构建树
+		System.out.println("构建树结束,共消耗" + (System.currentTimeMillis() - startTried) +"毫秒");
+		KeyWordDOList = null;
+	}
+
+	public void loadKeyWord(List<String> words) throws IOException{
+		List<String> keyWordList = new ArrayList<String>();/*URL dic = ArrayTrie.class.getResource("keyword.txt");*/
+
+		for (String line:words) {
+			String keyWord = line;
+			keyWord = new String(keyWord.getBytes("UTF-8"));
+			keyWordList.add(keyWord);
+			addKeyWord(keyWord);
+		}
+
+		for (String keyWord : keyWordList) {
+			initCharSeq(keyWord.trim());
+		}
+
+		if (seqMap.size() > baseInit) {
+			baseInit = seqMap.size();
+		}
+		System.out.println("开始构建敏感词数组树");
+		long startTried = System.currentTimeMillis();
+		tried();// 构建树
+		System.out.println("构建树结束,共消耗" + (System.currentTimeMillis() - startTried) +"毫秒");
+		KeyWordDOList = null;
+	}
 	class KeyWordDO{
 		char firstWord;
 		String keyWord;
@@ -570,7 +744,47 @@ public class DoubleArrayTrieStatic {
 			this.keyWord = keyWord;
 		}
 	}
-	protected DoubleArrayTrieStatic() {}
+	protected DATrieStatic() {}
 
 
+	public static void main(String a[]){
+		DATrieStatic treeStatic = new DATrieStatic();
+		try {
+			//treeStatic.loadKeyWord(Arrays.asList("中国","中国人","中国人民","apple"));
+			treeStatic.loadKeyWord();
+            System.out.println(treeStatic.replaceAllKeyWord("省委来了个省委门傻逼电鸡丁香社","[","]"));
+            System.out.println(treeStatic.replaceAllKeyWord("省委来了个省委门傻逼电鸡丁香社",null));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+    	/*DATrieStatic treeStatic = new DATrieStatic();
+		try {
+			treeStatic.loadKeyWord("/Users/boen/IdeaProjects/DoubleArrayTrie-master/src/main/resources/keyword.txt");
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		for (String aa :treeStatic.getAllKeyWord("王八蛋手机连反倒谤罪获刑是家乐福记录但是分解落实到家乐福")) {
+			System.out.println(aa);
+		}
+		try
+		{
+			ObjectOutputStream o = new ObjectOutputStream( new FileOutputStream("/Users/boen/IdeaProjects/DoubleArrayTrie-master/src/main/resources/logInfo.out"));
+			o.writeObject(treeStatic);   //写入数据
+			o.close();
+		}catch(Exception e) {
+			e.printStackTrace();
+		}*/
+
+		/*try
+		{
+			ObjectInputStream in =new ObjectInputStream( new FileInputStream("/Users/boen/IdeaProjects/DoubleArrayTrie-master/src/main/resources/logInfo.out"));
+			DATrieStatic treeStatic1 = (DATrieStatic)in.readObject();   //读取数据
+			for (String aa :treeStatic1.getAllKeyWord("王八蛋手机连反倒是家乐福记录谤罪获刑但是分解落实到家乐福")) {
+				System.out.println(aa);
+			}
+			in.close();
+		}catch(Exception e) {
+			e.printStackTrace();
+		}*/
+	}
 }

@@ -1,4 +1,4 @@
-﻿package com.boen.keywordfilter;
+package com.boen.keywordfilter;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -11,19 +11,19 @@ import java.util.Map;
 
 /**
  * 静态字典数构建
- * 
+ *
  * <p>
  *  不支持动态增加节点，并且需要将首字相同的文字顺序排列提高效率.<br/>
  *  因为敏感词库比汉字数量少很多，使用Darts(unicode值为基数)会消耗较多内存,故写下此类减少内存占用。
  * </p>
  * <p> 未完成的功能: 敏感级别 </p>
- * <p> 
+ * <p>
  * 基本算法: <br/>
  * base[i] + c = next_sub;<br/>
- * check[i] = pre_sub; 
+ * check[i] = pre_sub;
  * </p>
  * ArrayTrie.java
- * 
+ *
  * @auther Boen
  * @date 2015年1月12日
  * @update 上午9:51:42
@@ -61,7 +61,7 @@ public class DoubleArrayTrieStatic_20150115 {
 	
 	private void initCharSeq(String keyWord ){
 		char[]  keyChars = keyWord.toCharArray();
-		
+
 		for (int i = 0; i < keyChars.length; i++) {
 			getCharSeq(keyChars[i], i == 0 ? true : false);
 		}

@@ -1,4 +1,4 @@
-﻿package com.boen.keywordfilter;
+package com.boen.keywordfilter;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
